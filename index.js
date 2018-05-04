@@ -43,7 +43,8 @@ log.addSerializers({
     return comments.map(c => ({
       id: c.id,
       author: c.author,
-      body: c.body
+      body: c.body,
+      permalink: c.permalink
     }));
   }
 })
@@ -64,25 +65,24 @@ const getDstId = (cb) => {
   }));
 };
 
-const replyToComment = (id, cb) => {
-  let text = 'Prices depend on the platform, so make sure to edit your message ';
+const replyToComment = ({ author, permalink }, cb) => {
+  let text = 'Prices depend on the platform, so make sure to edit your comment ';
+  text += `(https://reddit.com${permalink}) `;
   text += 'and include it. ';
   text += 'This is an automated message so don\'t reply to it.';
 
-  const replyOpts = {
-    payload: {
-      api_type: 'json',
-      text: text,
-      thing_id: `t1_${id}` // reply to comment
-      // thing_id: 't3_<ID>' // reply to post
-    }
+  const payload = {
+    api_type: 'json',
+    to: author,
+    subject: 'regarding your /r/fifa DST comment',
+    text
   };
 
   if (isDebugEnabled) {
     return setImmediate(cb);
   }
 
-  r.post(`/api/comment`, replyOpts, cb);
+  return r.post('/api/compose', { payload }, cb);
 }
 
 
@@ -126,7 +126,7 @@ const getProcessedComments = (id) => {
 const processComments = (id, alreadyProcessed, comments) => {
   log.debug({ comments }, 'comments retrieved');
 
-  const cmts = comments.filter(t => !(/(ps(\s)?3|ps(\s)?4|xb|pc)/ig.test(t.body)));
+  const cmts = comments.filter(t => !(/(ps(\s)?3|ps(\s)?4|xb|xone|pc)/ig.test(t.body)));
 
   const toBeProcessed = cmts.filter(c => !alreadyProcessed.includes(c.id));
   const nextCycle = () => setTimeout(processTopLevelComments, 60 * 1000 * 2);
@@ -141,9 +141,9 @@ const processComments = (id, alreadyProcessed, comments) => {
 
   toBeProcessed.forEach(c => {
     next(cb => {
-      log.info(`replying to comment ${c.id}`);
+      log.info(`buzzing author of comment ${c.id}`);
 
-      replyToComment(c.id, errTo(cb, () => {
+      replyToComment(c, errTo(cb, () => {
         processedComments[id].push(c.id);
         writeFileSync(getProcessedFileById(id), JSON.stringify(processedComments[id], null, 2));
 
