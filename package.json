@@ -5,6 +5,7 @@
   "main": "index.js",
   "dependencies": {
     "bunyan": "1.8.12",
+    "enabled": "1.0.2",
     "errto": "0.2.1",
     "reddit-api-client": "1.1.1",
     "waterfallize": "1.1.0"

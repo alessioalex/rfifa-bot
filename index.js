@@ -7,6 +7,7 @@ const errTo = require('errto');
 const RedditClient = require('reddit-api-client');
 const commentStream = require('./lib/stream-top-level-cmts');
 const { name, version } = require('./package.json');
+const isDebugEnabled = require('enabled')(name);
 
 let opts = Object.assign({}, process.env);
 
@@ -27,7 +28,8 @@ const r = new RedditClient({
 });
 
 const log = createLogger({
-  name: `${name}@${version}`
+  name: `${name}@${version}`,
+  level: isDebugEnabled ? 'debug' : 'error'
 });
 
 log.addSerializers({
@@ -65,14 +67,20 @@ const replyToComment = (id, cb) => {
   text += 'and include it. ';
   text += 'This is an automated message so don\'t reply to it.';
 
-  r.post(`/api/comment`, {
+  const replyOpts = {
     payload: {
       api_type: 'json',
       text: text,
       thing_id: `t1_${id}` // reply to comment
       // thing_id: 't3_<ID>' // reply to post
     }
-  }, cb);
+  };
+
+  if (isDebugEnabled) {
+    return setTimeout(cb, 600);
+  }
+
+  r.post(`/api/comment`, replyOpts, cb);
 }
 
 
