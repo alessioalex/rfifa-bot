@@ -9,6 +9,8 @@ const commentStream = require('./lib/stream-top-level-cmts');
 const { name, version } = require('./package.json');
 const isDebugEnabled = require('enabled')(name);
 
+require('app-title')();
+
 let opts = Object.assign({}, process.env);
 
 try {
@@ -77,7 +79,7 @@ const replyToComment = (id, cb) => {
   };
 
   if (isDebugEnabled) {
-    return setTimeout(cb, 600);
+    return setImmediate(cb);
   }
 
   r.post(`/api/comment`, replyOpts, cb);
